@@ -167,7 +167,7 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
-.env
+backend/config/config.env
 .env.development.local
 .env.test.local
 .env.production.local
@@ -256,7 +256,7 @@ ehthumbs_vista.db
 # Dump file
 *.stackdump
 
-# Folder config file
+# Folder config.env file
 [Dd]esktop.ini
 
 # Recycle Bin used on file shares
