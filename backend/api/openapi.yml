@@ -1,25 +1,43 @@
-openapi: "3.0.2"
+openapi: 3.0.2
+servers:
+  - url: /api/v1/
 info:
   title: Todo List API
   version: 1.0.0
   description: A simple API for managing todo lists.
-
+tags:
+  - name: task
+    description: Everything about your tasks
 paths:
   /tasks:
     get:
+      tags:
+        - task
       summary: Get all tasks
       description: Retrieves a list of all tasks.
+      operationId: getTasks
       responses:
         "200":
           description: Successful operation
           content:
             application/json:
-              example:
-                - $ref: "#/components/schemas/Task"
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+        default:
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
     post:
+      tags:
+        - task
       summary: Create a new task
       description: Creates a new task.
+      operationId: createTask
       requestBody:
         required: true
         content:
@@ -31,8 +49,14 @@ paths:
           description: Task created successfully
           content:
             application/json:
-              example:
+              schema:
                 $ref: "#/components/schemas/Task"
+        default:
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /tasks/{id}:
     parameters:
@@ -43,25 +67,32 @@ paths:
         schema:
           type: integer
     get:
+      tags:
+        - task
       summary: Get a task by ID
       description: Retrieves a specific task by its ID.
+      operationId: getTaskById
       responses:
         "200":
           description: Successful operation
           content:
             application/json:
-              example:
+              schema:
                 $ref: "#/components/schemas/Task"
         "404":
-          description: Task not found
+          $ref: "#/components/responses/TaskNotFound"
+        default:
+          description: General Error
           content:
             application/json:
-              example:
-                $ref: "#/components/responses/TaskNotFound"
-
+              schema:
+                $ref: "#/components/schemas/Error"
     put:
+      tags:
+        - task
       summary: Update a task
       description: Updates a specific task by its ID.
+      operationId: updateTask
       requestBody:
         required: true
         content:
@@ -73,27 +104,34 @@ paths:
           description: Task updated successfully
           content:
             application/json:
-              example:
+              schema:
                 $ref: "#/components/schemas/Task"
         "404":
-          description: Task not found
+          $ref: "#/components/responses/TaskNotFound"
+        default:
+          description: General Error
           content:
             application/json:
-              example:
-                $ref: "#/components/responses/TaskNotFound"
+              schema:
+                $ref: "#/components/schemas/Error"
 
     delete:
+      tags:
+        - task
       summary: Delete a task
       description: Deletes a specific task by its ID.
+      operationId: deleteTask
       responses:
         "204":
           description: Task deleted successfully
         "404":
-          description: Task not found
+          $ref: "#/components/responses/TaskNotFound"
+        default:
+          description: General Error
           content:
             application/json:
-              example:
-                $ref: "#/components/responses/TaskNotFound"
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   schemas:
@@ -166,12 +204,28 @@ components:
       required:
         - title
         - completed
-
+    Error:
+      description: Represents error object
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int64
+        message:
+          type: string
+      required:
+        - code
+        - message
   responses:
     TaskNotFound:
       description: Task not found
       content:
         application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
           example:
             error: Task not found
 
@@ -179,6 +233,11 @@ components:
       description: Bad request
       content:
         application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
           example:
             error: Bad request, please check your request body
 
@@ -186,5 +245,10 @@ components:
       description: Unauthorized request
       content:
         application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
           example:
             error: Unauthorized request

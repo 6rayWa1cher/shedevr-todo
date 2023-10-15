@@ -1,7 +1,7 @@
 package app
 
-import "github.com/6rayWa1cher/shedevr-todo/backend/pkg"
+import "github.com/6rayWa1cher/shedevr-todo/backend/pkg/oas"
 
 type Service struct {
-	pkg.ServerInterface
+	oas.Handler
 }

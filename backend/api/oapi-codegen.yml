@@ -1,8 +1,0 @@
-package: pkg
-generate:
-  models: true
-  gin-server: true
-  embedded-spec: true
-output: ../pkg/server.gen.go
-output-options:
-  skip-prune: true
