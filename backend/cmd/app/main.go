@@ -66,6 +66,7 @@ func initMetrics(addr string, lg *zap.Logger) (*server.Metrics, []oas.ServerOpti
 }
 
 func main() {
+	fmt.Println("Hello Docker!")
 	server.Run(func(ctx context.Context, lg *zap.Logger) error {
 		appConfig, err := initConfig()
 		if err != nil {
