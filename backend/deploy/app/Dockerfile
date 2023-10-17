@@ -2,12 +2,10 @@
 
 FROM golang:1.21-alpine AS builder
 
-# Set destination for COPY
 WORKDIR /app
 
 ENV GOOS=linux
 
-# Download Go modules
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -16,7 +14,7 @@ RUN mkdir -p ./pkg/oas
 RUN go generate ./...
 
 COPY . ./
-# Build
+
 RUN CGO_ENABLED=0 go build -o /app-server ./cmd/app
 
 

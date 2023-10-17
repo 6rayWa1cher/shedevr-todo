@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/Masterminds/squirrel"
 )
 
@@ -26,28 +25,6 @@ func NewDao(db *sql.DB) Dao {
 	return &dao{
 		db: db,
 	}
-}
-
-type DaoConfig struct {
-	Host     string
-	Port     int
-	Name     string
-	Username string
-	Password string
-}
-
-func NewDb(c DaoConfig) (*sql.DB, error) {
-	// Starting a database
-	psqlInfo := fmt.Sprintf(
-		"host=%s port=%d user=%s dbname=%s password=%s sslmode=prefer",
-		c.Host, c.Port, c.Username, c.Name, c.Password,
-	)
-	var err error
-	Db, err = sql.Open("postgres", psqlInfo)
-	if err != nil {
-		return nil, err
-	}
-	return Db, nil
 }
 
 func (d *dao) NewTaskQuery() TaskQuery {
