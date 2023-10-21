@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/6rayWa1cher/shedevr-todo/backend/internal/app"
+	"github.com/6rayWa1cher/shedevr-todo/backend/internal/repository"
 	"github.com/6rayWa1cher/shedevr-todo/backend/internal/server"
+	"github.com/6rayWa1cher/shedevr-todo/backend/internal/service"
 	"github.com/6rayWa1cher/shedevr-todo/backend/pkg/oas"
 	"github.com/go-faster/errors"
 	"github.com/go-playground/validator/v10"
@@ -15,9 +17,14 @@ import (
 )
 
 type Config struct {
-	ApiPort        int32 `mapstructure:"API_PORT" validate:"required,gt=0"`
-	MetricsEnabled bool  `mapstructure:"METRICS_ENABLED"`
-	MetricsPort    int32 `mapstructure:"METRICS_PORT" validate:"required_with=MetricsEnabled&gt=0"`
+	ApiPort        int32  `mapstructure:"API_PORT" validate:"required,gt=0"`
+	MetricsEnabled bool   `mapstructure:"METRICS_ENABLED"`
+	MetricsPort    int32  `mapstructure:"METRICS_PORT" validate:"required_with=MetricsEnabled&gt=0"`
+	DbHost         string `mapstructure:"DB_HOST" validate:"required"`
+	DbPort         int    `mapstructure:"DB_PORT" validate:"required,gt=0"`
+	DbName         string `mapstructure:"DB_NAME" validate:"required"`
+	DbUsername     string `mapstructure:"DB_USERNAME" validate:"required"`
+	DbPassword     string `mapstructure:"DB_PASSWORD" validate:"required"`
 }
 
 func NewConfig() Config {
@@ -66,7 +73,6 @@ func initMetrics(addr string, lg *zap.Logger) (*server.Metrics, []oas.ServerOpti
 }
 
 func main() {
-	fmt.Println("Hello Docker!")
 	server.Run(func(ctx context.Context, lg *zap.Logger) error {
 		appConfig, err := initConfig()
 		if err != nil {
@@ -94,7 +100,17 @@ func main() {
 			lg.Info("Metrics are disabled")
 		}
 
-		handler := app.NewService()
+		db, err := repository.NewDb(appConfigToDbConfig(appConfig))
+
+		if err != nil {
+			return errors.Wrap(err, "db driver init")
+		}
+
+		dao := repository.NewDao(db)
+
+		taskService := service.NewTaskService(dao)
+
+		handler := app.NewService(taskService)
 
 		oasServer, err := oas.NewServer(handler, options...)
 		if err != nil {
@@ -126,4 +142,14 @@ func main() {
 
 		return g.Wait()
 	})
+}
+
+func appConfigToDbConfig(appConfig *Config) *repository.DbConfig {
+	return &repository.DbConfig{
+		Host:     appConfig.DbHost,
+		Port:     appConfig.DbPort,
+		Name:     appConfig.DbName,
+		Username: appConfig.DbUsername,
+		Password: appConfig.DbPassword,
+	}
 }

@@ -5,6 +5,7 @@ type Task struct {
 	Title     string
 	Text      string
 	Completed CompletedStatusType
+	Counter   *Counter
 }
 
 type CompletedStatusType string

@@ -1,3 +1,3 @@
-drop table if exists public.test;
+drop table if exists todo.test;
 
-drop type if exists public.completed_status;
+drop type if exists todo.completed_status;

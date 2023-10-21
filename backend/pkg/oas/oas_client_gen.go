@@ -247,7 +247,7 @@ func (c *Client) sendDeleteTask(ctx context.Context, params DeleteTaskParams) (r
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.IntToString(params.ID))
+			return e.EncodeValue(conv.Int64ToString(params.ID))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -337,7 +337,7 @@ func (c *Client) sendGetTaskById(ctx context.Context, params GetTaskByIdParams) 
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.IntToString(params.ID))
+			return e.EncodeValue(conv.Int64ToString(params.ID))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -508,7 +508,7 @@ func (c *Client) sendUpdateTask(ctx context.Context, request *UpdateTask, params
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.IntToString(params.ID))
+			return e.EncodeValue(conv.Int64ToString(params.ID))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}

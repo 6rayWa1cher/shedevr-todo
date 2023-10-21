@@ -8,6 +8,7 @@ require (
 	github.com/go-faster/jx v1.1.0
 	github.com/go-playground/validator/v10 v10.15.5
 	github.com/golang-migrate/migrate/v4 v4.16.2
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/ogen-go/ogen v0.76.0
 	github.com/povilasv/prommod v0.0.12
 	github.com/prometheus/client_golang v1.17.0

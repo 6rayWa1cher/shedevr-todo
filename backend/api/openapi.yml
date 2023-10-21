@@ -66,6 +66,7 @@ paths:
         description: ID of the task to retrieve or update.
         schema:
           type: integer
+          format: int64
     get:
       tags:
         - task

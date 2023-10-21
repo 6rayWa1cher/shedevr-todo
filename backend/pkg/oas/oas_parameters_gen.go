@@ -18,7 +18,7 @@ import (
 // DeleteTaskParams is parameters of deleteTask operation.
 type DeleteTaskParams struct {
 	// ID of the task to retrieve or update.
-	ID int
+	ID int64
 }
 
 func unpackDeleteTaskParams(packed middleware.Parameters) (params DeleteTaskParams) {
@@ -27,7 +27,7 @@ func unpackDeleteTaskParams(packed middleware.Parameters) (params DeleteTaskPara
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(int)
+		params.ID = packed[key].(int64)
 	}
 	return params
 }
@@ -57,7 +57,7 @@ func decodeDeleteTaskParams(args [1]string, argsEscaped bool, r *http.Request) (
 					return err
 				}
 
-				c, err := conv.ToInt(val)
+				c, err := conv.ToInt64(val)
 				if err != nil {
 					return err
 				}
@@ -84,7 +84,7 @@ func decodeDeleteTaskParams(args [1]string, argsEscaped bool, r *http.Request) (
 // GetTaskByIdParams is parameters of getTaskById operation.
 type GetTaskByIdParams struct {
 	// ID of the task to retrieve or update.
-	ID int
+	ID int64
 }
 
 func unpackGetTaskByIdParams(packed middleware.Parameters) (params GetTaskByIdParams) {
@@ -93,7 +93,7 @@ func unpackGetTaskByIdParams(packed middleware.Parameters) (params GetTaskByIdPa
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(int)
+		params.ID = packed[key].(int64)
 	}
 	return params
 }
@@ -123,7 +123,7 @@ func decodeGetTaskByIdParams(args [1]string, argsEscaped bool, r *http.Request) 
 					return err
 				}
 
-				c, err := conv.ToInt(val)
+				c, err := conv.ToInt64(val)
 				if err != nil {
 					return err
 				}
@@ -150,7 +150,7 @@ func decodeGetTaskByIdParams(args [1]string, argsEscaped bool, r *http.Request) 
 // UpdateTaskParams is parameters of updateTask operation.
 type UpdateTaskParams struct {
 	// ID of the task to retrieve or update.
-	ID int
+	ID int64
 }
 
 func unpackUpdateTaskParams(packed middleware.Parameters) (params UpdateTaskParams) {
@@ -159,7 +159,7 @@ func unpackUpdateTaskParams(packed middleware.Parameters) (params UpdateTaskPara
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(int)
+		params.ID = packed[key].(int64)
 	}
 	return params
 }
@@ -189,7 +189,7 @@ func decodeUpdateTaskParams(args [1]string, argsEscaped bool, r *http.Request) (
 					return err
 				}
 
-				c, err := conv.ToInt(val)
+				c, err := conv.ToInt64(val)
 				if err != nil {
 					return err
 				}

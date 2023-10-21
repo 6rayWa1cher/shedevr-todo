@@ -1,27 +1,29 @@
 package repository
 
 import (
-	"database/sql"
+	"errors"
 	"github.com/Masterminds/squirrel"
+	"github.com/jmoiron/sqlx"
 )
 
 type Dao interface {
 	NewTaskQuery() TaskQuery
 }
 
+type QuerySupplier interface {
+}
+
 type dao struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
-var Db *sql.DB
+var Db *sqlx.DB
 
-func pgQbFactory(db *sql.DB) func() squirrel.StatementBuilderType {
-	return func() squirrel.StatementBuilderType {
-		return squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar).RunWith(db)
-	}
+func pgQb() squirrel.StatementBuilderType {
+	return squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 }
 
-func NewDao(db *sql.DB) Dao {
+func NewDao(db *sqlx.DB) Dao {
 	return &dao{
 		db: db,
 	}
@@ -29,6 +31,9 @@ func NewDao(db *sql.DB) Dao {
 
 func (d *dao) NewTaskQuery() TaskQuery {
 	return &taskQuery{
-		qb: pgQbFactory(d.db),
+		qb: pgQb(),
+		db: d.db,
 	}
 }
+
+var ErrNoResult = errors.New("no result found")
