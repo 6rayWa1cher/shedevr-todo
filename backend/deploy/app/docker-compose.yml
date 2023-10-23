@@ -6,11 +6,11 @@ services:
       context: ../../
       dockerfile: deploy/app/Dockerfile
     environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USERNAME: shedevr
-      DB_NAME: shedevr
-      DB_PASSWORD: shedevr
+      SHEDEVR_BACKEND_DB_HOST: db
+      SHEDEVR_BACKEND_DB_PORT: 5432
+      SHEDEVR_BACKEND_DB_USERNAME: shedevr
+      SHEDEVR_BACKEND_DB_NAME: shedevr
+      SHEDEVR_BACKEND_DB_PASSWORD: shedevr
     depends_on:
       db:
         condition: service_healthy

@@ -79,8 +79,8 @@ func main() {
 			return errors.Wrap(err, "config.env file")
 		}
 
-		apiAddr := fmt.Sprintf("127.0.0.1:%d", appConfig.ApiPort)
-		metricsAddr := fmt.Sprintf("127.0.0.1:%d", appConfig.MetricsPort)
+		apiAddr := fmt.Sprintf(":%d", appConfig.ApiPort)
+		metricsAddr := fmt.Sprintf(":%d", appConfig.MetricsPort)
 
 		lg.Info("Initializing",
 			zap.String("http.addr", apiAddr),

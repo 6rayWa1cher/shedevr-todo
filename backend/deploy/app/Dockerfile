@@ -42,6 +42,8 @@ EXPOSE 8080
 ENV SHEDEVR_BACKEND_METRICS_PORT=8090
 EXPOSE 8090
 
+RUN apk update && apk add curl
+
 USER $SERVICE_NAME
 
 HEALTHCHECK --interval=5s --timeout=10s --retries=3 CMD curl -sS 127.0.0.1:8080 || exit 1
