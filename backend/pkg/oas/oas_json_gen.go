@@ -64,22 +64,16 @@ func (s *Counter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Counter) encodeFields(e *jx.Encoder) {
 	{
-		if s.Value.Set {
-			e.FieldStart("value")
-			s.Value.Encode(e)
-		}
+		e.FieldStart("value")
+		e.Float64(s.Value)
 	}
 	{
-		if s.Scale.Set {
-			e.FieldStart("scale")
-			s.Scale.Encode(e)
-		}
+		e.FieldStart("scale")
+		e.Str(s.Scale)
 	}
 	{
-		if s.MaxValue.Set {
-			e.FieldStart("max_value")
-			s.MaxValue.Encode(e)
-		}
+		e.FieldStart("max_value")
+		e.Float64(s.MaxValue)
 	}
 }
 
@@ -94,13 +88,16 @@ func (s *Counter) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode Counter to nil")
 	}
+	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
 		case "value":
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				s.Value.Reset()
-				if err := s.Value.Decode(d); err != nil {
+				v, err := d.Float64()
+				s.Value = float64(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -108,9 +105,11 @@ func (s *Counter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"value\"")
 			}
 		case "scale":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				s.Scale.Reset()
-				if err := s.Scale.Decode(d); err != nil {
+				v, err := d.Str()
+				s.Scale = string(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -118,9 +117,11 @@ func (s *Counter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"scale\"")
 			}
 		case "max_value":
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				s.MaxValue.Reset()
-				if err := s.MaxValue.Decode(d); err != nil {
+				v, err := d.Float64()
+				s.MaxValue = float64(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -133,6 +134,38 @@ func (s *Counter) Decode(d *jx.Decoder) error {
 		return nil
 	}); err != nil {
 		return errors.Wrap(err, "decode Counter")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfCounter) {
+					name = jsonFieldsNameOfCounter[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
 	}
 
 	return nil
@@ -473,41 +506,6 @@ func (s OptCounter) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptCounter) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes float64 as json.
-func (o OptFloat64) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Float64(float64(o.Value))
-}
-
-// Decode decodes float64 from json.
-func (o *OptFloat64) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptFloat64 to nil")
-	}
-	o.Set = true
-	v, err := d.Float64()
-	if err != nil {
-		return err
-	}
-	o.Value = float64(v)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptFloat64) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptFloat64) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

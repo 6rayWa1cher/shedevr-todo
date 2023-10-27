@@ -51,8 +51,28 @@ func (t *taskQuery) GetTask(ctx context.Context, id int64) (*entities.Task, erro
 }
 
 func (t *taskQuery) CreateTask(ctx context.Context, task entities.Task) (*int64, error) {
-	//TODO implement me
-	panic("implement me")
+	q, args, err := t.qb.Insert(taskTable).
+		Columns("title", "text", "completed", "counter_value",
+			"counter_max_value", "counter_scale", "counter_exist").
+		Values(task.Title, task.Text, task.Completed, task.CounterValue,
+			task.CounterMaxValue, task.CounterScale, task.CounterExist).
+		Suffix("returning id").
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "[repository.CreateTask] sql build error")
+	}
+	stmt, err := t.db.PreparexContext(ctx, q)
+	if err != nil {
+		return nil, errors.Wrap(err, "[repository.CreateTask] prepare context error")
+	}
+	var id int64
+	err = stmt.GetContext(ctx, &id, args...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNoResult
+	} else if err != nil {
+		return nil, errors.Wrap(err, "[repository.CreateTask] insert or deserialize error")
+	}
+	return &id, nil
 }
 
 func (t *taskQuery) UpdateTask(ctx context.Context, task entities.Task) (*entities.Task, error) {

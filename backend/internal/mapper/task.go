@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/6rayWa1cher/shedevr-todo/backend/internal/dto"
 	"github.com/6rayWa1cher/shedevr-todo/backend/internal/entities"
@@ -15,8 +16,10 @@ func TaskEntityToDto(task entities.Task) (dto.Task, error) {
 	output := dto.Task{
 		ID:        task.ID,
 		Title:     task.Title,
-		Text:      task.Text.String,
 		Completed: status,
+	}
+	if task.Text.Valid {
+		output.Text = &task.Text.String
 	}
 	if task.CounterExist {
 		counter := dto.Counter{}
@@ -51,15 +54,63 @@ func TaskDtoToOas(task dto.Task) oas.Task {
 	output := oas.Task{
 		ID:        oas.NewOptInt64(task.ID),
 		Title:     task.Title,
-		Text:      task.Text,
 		Completed: oas.CompletedEnum(task.Completed),
+	}
+	if task.Text != nil {
+		output.Text = *task.Text
 	}
 	if task.Counter != nil {
 		output.Counter = oas.NewOptCounter(oas.Counter{
-			Value:    oas.NewOptFloat64(task.Counter.Value),
-			Scale:    oas.NewOptString(task.Counter.Scale),
-			MaxValue: oas.NewOptFloat64(task.Counter.MaxValue),
+			Value:    task.Counter.Value,
+			Scale:    task.Counter.Scale,
+			MaxValue: task.Counter.MaxValue,
 		})
 	}
 	return output
+}
+
+func TaskDtoToEntity(task dto.Task) entities.Task {
+	output := entities.Task{
+		ID:        task.ID,
+		Title:     task.Title,
+		Completed: string(task.Completed),
+	}
+	if task.Text != nil {
+		output.Text = sql.NullString{String: *task.Text, Valid: true}
+	}
+	if task.Counter != nil {
+		output.CounterExist = true
+		output.CounterValue = sql.NullFloat64{Float64: task.Counter.Value, Valid: true}
+		output.CounterMaxValue = sql.NullFloat64{Float64: task.Counter.MaxValue, Valid: true}
+		output.CounterScale = sql.NullString{String: task.Counter.Scale, Valid: true}
+	}
+	return output
+}
+
+func NewTaskToDto(task oas.NewTask) (dto.Task, error) {
+	output := dto.Task{
+		Title: task.Title,
+	}
+	if value, ok := task.Text.Get(); ok {
+		output.Text = &value
+	}
+	if value, ok := task.Completed.Get(); ok {
+		completedStatus, err := completedStatusToType(string(value))
+		if err != nil {
+			return dto.Task{}, err
+		}
+		output.Completed = completedStatus
+	} else {
+		output.Completed = dto.CompletedNo
+	}
+
+	if value, ok := task.Counter.Get(); ok {
+		counter := dto.Counter{
+			Value:    value.Value,
+			MaxValue: value.MaxValue,
+			Scale:    value.Scale,
+		}
+		output.Counter = &counter
+	}
+	return output, nil
 }

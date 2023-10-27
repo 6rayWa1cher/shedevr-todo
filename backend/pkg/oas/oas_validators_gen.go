@@ -24,15 +24,8 @@ func (s CompletedEnum) Validate() error {
 func (s *Counter) Validate() error {
 	var failures []validate.FieldError
 	if err := func() error {
-		if value, ok := s.Value.Get(); ok {
-			if err := func() error {
-				if err := (validate.Float{}).Validate(float64(value)); err != nil {
-					return errors.Wrap(err, "float")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
+		if err := (validate.Float{}).Validate(float64(s.Value)); err != nil {
+			return errors.Wrap(err, "float")
 		}
 		return nil
 	}(); err != nil {
@@ -42,15 +35,8 @@ func (s *Counter) Validate() error {
 		})
 	}
 	if err := func() error {
-		if value, ok := s.MaxValue.Get(); ok {
-			if err := func() error {
-				if err := (validate.Float{}).Validate(float64(value)); err != nil {
-					return errors.Wrap(err, "float")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
+		if err := (validate.Float{}).Validate(float64(s.MaxValue)); err != nil {
+			return errors.Wrap(err, "float")
 		}
 		return nil
 	}(); err != nil {

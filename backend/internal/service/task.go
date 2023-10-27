@@ -10,7 +10,7 @@ import (
 
 type TaskService interface {
 	GetTask(ctx context.Context, taskId int64) (*dto.Task, error)
-	CreateTask(ctx context.Context, task dto.Task) (*int64, error)
+	CreateTask(ctx context.Context, task dto.Task) (*dto.Task, error)
 	UpdateTask(ctx context.Context, task dto.Task) (*dto.Task, error)
 	DeleteTask(ctx context.Context, taskId int64, userId int64) error
 }
@@ -38,9 +38,18 @@ func (t *taskService) GetTask(ctx context.Context, taskId int64) (*dto.Task, err
 	return &taskDto, nil
 }
 
-func (t *taskService) CreateTask(ctx context.Context, task dto.Task) (*int64, error) {
-	//TODO implement me
-	panic("implement me")
+func (t *taskService) CreateTask(ctx context.Context, task dto.Task) (*dto.Task, error) {
+	taskEntity := mapper.TaskDtoToEntity(task)
+	taskId, err := t.dao.NewTaskQuery().CreateTask(ctx, taskEntity)
+	if err != nil {
+		return nil, errors.Wrap(err, "[service.CreateTask] sql error")
+	}
+	taskEntity.ID = *taskId
+	taskDto, err := mapper.TaskEntityToDto(taskEntity)
+	if err != nil {
+		return nil, errors.Wrap(err, "[service.CreateTask] mapping error")
+	}
+	return &taskDto, nil
 }
 
 func (t *taskService) UpdateTask(ctx context.Context, task dto.Task) (*dto.Task, error) {

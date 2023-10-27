@@ -65,40 +65,40 @@ func (s *CompletedEnum) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/Counter
 type Counter struct {
 	// The value of the counter.
-	Value OptFloat64 `json:"value"`
+	Value float64 `json:"value"`
 	// The scale of the counter.
-	Scale OptString `json:"scale"`
+	Scale string `json:"scale"`
 	// The max value of the counter.
-	MaxValue OptFloat64 `json:"max_value"`
+	MaxValue float64 `json:"max_value"`
 }
 
 // GetValue returns the value of Value.
-func (s *Counter) GetValue() OptFloat64 {
+func (s *Counter) GetValue() float64 {
 	return s.Value
 }
 
 // GetScale returns the value of Scale.
-func (s *Counter) GetScale() OptString {
+func (s *Counter) GetScale() string {
 	return s.Scale
 }
 
 // GetMaxValue returns the value of MaxValue.
-func (s *Counter) GetMaxValue() OptFloat64 {
+func (s *Counter) GetMaxValue() float64 {
 	return s.MaxValue
 }
 
 // SetValue sets the value of Value.
-func (s *Counter) SetValue(val OptFloat64) {
+func (s *Counter) SetValue(val float64) {
 	s.Value = val
 }
 
 // SetScale sets the value of Scale.
-func (s *Counter) SetScale(val OptString) {
+func (s *Counter) SetScale(val string) {
 	s.Scale = val
 }
 
 // SetMaxValue sets the value of MaxValue.
-func (s *Counter) SetMaxValue(val OptFloat64) {
+func (s *Counter) SetMaxValue(val float64) {
 	s.MaxValue = val
 }
 
@@ -296,52 +296,6 @@ func (o OptCounter) Get() (v Counter, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptCounter) Or(d Counter) Counter {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptFloat64 returns new OptFloat64 with value set to v.
-func NewOptFloat64(v float64) OptFloat64 {
-	return OptFloat64{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptFloat64 is optional float64.
-type OptFloat64 struct {
-	Value float64
-	Set   bool
-}
-
-// IsSet returns true if OptFloat64 was set.
-func (o OptFloat64) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptFloat64) Reset() {
-	var v float64
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptFloat64) SetTo(v float64) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptFloat64) Get() (v float64, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptFloat64) Or(d float64) float64 {
 	if v, ok := o.Get(); ok {
 		return v
 	}

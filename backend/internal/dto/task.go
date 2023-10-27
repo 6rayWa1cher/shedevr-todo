@@ -3,7 +3,7 @@ package dto
 type Task struct {
 	ID        int64
 	Title     string
-	Text      string
+	Text      *string
 	Completed CompletedStatusType
 	Counter   *Counter
 }

@@ -175,6 +175,10 @@ components:
         max_value:
           type: number
           description: The max value of the counter
+      required:
+        - value
+        - scale
+        - max_value
 
     NewTask:
       type: object
