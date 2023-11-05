@@ -479,10 +479,19 @@ func (*TaskNotFound) updateTaskRes()  {}
 
 // Ref: #/components/schemas/UpdateTask
 type UpdateTask struct {
-	// The updated title of the task.
-	Title     string        `json:"title"`
-	Completed CompletedEnum `json:"completed"`
-	Counter   OptCounter    `json:"counter"`
+	// The unique identifier for the task.
+	ID OptInt64 `json:"id"`
+	// The title of the new task.
+	Title string `json:"title"`
+	// The description of the task.
+	Text      OptString        `json:"text"`
+	Completed OptCompletedEnum `json:"completed"`
+	Counter   OptCounter       `json:"counter"`
+}
+
+// GetID returns the value of ID.
+func (s *UpdateTask) GetID() OptInt64 {
+	return s.ID
 }
 
 // GetTitle returns the value of Title.
@@ -490,8 +499,13 @@ func (s *UpdateTask) GetTitle() string {
 	return s.Title
 }
 
+// GetText returns the value of Text.
+func (s *UpdateTask) GetText() OptString {
+	return s.Text
+}
+
 // GetCompleted returns the value of Completed.
-func (s *UpdateTask) GetCompleted() CompletedEnum {
+func (s *UpdateTask) GetCompleted() OptCompletedEnum {
 	return s.Completed
 }
 
@@ -500,13 +514,23 @@ func (s *UpdateTask) GetCounter() OptCounter {
 	return s.Counter
 }
 
+// SetID sets the value of ID.
+func (s *UpdateTask) SetID(val OptInt64) {
+	s.ID = val
+}
+
 // SetTitle sets the value of Title.
 func (s *UpdateTask) SetTitle(val string) {
 	s.Title = val
 }
 
+// SetText sets the value of Text.
+func (s *UpdateTask) SetText(val OptString) {
+	s.Text = val
+}
+
 // SetCompleted sets the value of Completed.
-func (s *UpdateTask) SetCompleted(val CompletedEnum) {
+func (s *UpdateTask) SetCompleted(val OptCompletedEnum) {
 	s.Completed = val
 }
 

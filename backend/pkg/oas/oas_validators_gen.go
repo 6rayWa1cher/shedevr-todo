@@ -135,8 +135,15 @@ func (s *Task) Validate() error {
 func (s *UpdateTask) Validate() error {
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := s.Completed.Validate(); err != nil {
-			return err
+		if value, ok := s.Completed.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
 		}
 		return nil
 	}(); err != nil {

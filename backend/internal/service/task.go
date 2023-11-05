@@ -5,10 +5,12 @@ import (
 	"github.com/6rayWa1cher/shedevr-todo/backend/internal/dto"
 	"github.com/6rayWa1cher/shedevr-todo/backend/internal/mapper"
 	"github.com/6rayWa1cher/shedevr-todo/backend/internal/repository"
+	"github.com/6rayWa1cher/shedevr-todo/backend/internal/utils"
 	"github.com/go-faster/errors"
 )
 
 type TaskService interface {
+	GetTasks(ctx context.Context) ([]dto.Task, error)
 	GetTask(ctx context.Context, taskId int64) (*dto.Task, error)
 	CreateTask(ctx context.Context, task dto.Task) (*dto.Task, error)
 	UpdateTask(ctx context.Context, task dto.Task) (*dto.Task, error)
@@ -22,6 +24,20 @@ type taskService struct {
 
 func NewTaskService(dao repository.Dao) TaskService {
 	return &taskService{dao: dao}
+}
+
+func (t *taskService) GetTasks(ctx context.Context) ([]dto.Task, error) {
+	tasks, err := t.dao.NewTaskQuery().GetTasks(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "[service.GetTasks] sql error")
+	}
+
+	taskDtos, err := utils.MapWithError(tasks, mapper.TaskEntityToDto)
+	if err != nil {
+		return nil, errors.Wrap(err, "[service.GetTasks] mapping error")
+	}
+
+	return taskDtos, nil
 }
 
 func (t *taskService) GetTask(ctx context.Context, taskId int64) (*dto.Task, error) {
@@ -53,11 +69,24 @@ func (t *taskService) CreateTask(ctx context.Context, task dto.Task) (*dto.Task,
 }
 
 func (t *taskService) UpdateTask(ctx context.Context, task dto.Task) (*dto.Task, error) {
-	//TODO implement me
-	panic("implement me")
+	taskEntity := mapper.TaskDtoToEntity(task)
+	updatedTaskEntity, err := t.dao.NewTaskQuery().UpdateTask(ctx, taskEntity)
+	if errors.Is(err, repository.ErrNoResult) {
+		return nil, ErrNotFound
+	} else if err != nil {
+		return nil, errors.Wrap(err, "[service.UpdateTask] sql error")
+	}
+	taskDto, err := mapper.TaskEntityToDto(*updatedTaskEntity)
+	if err != nil {
+		return nil, errors.Wrap(err, "[service.UpdateTask] mapping error")
+	}
+	return &taskDto, nil
 }
 
 func (t *taskService) DeleteTask(ctx context.Context, taskId int64, userId int64) error {
-	//TODO implement me
-	panic("implement me")
+	err := t.dao.NewTaskQuery().DeleteTask(ctx, taskId)
+	if err != nil {
+		return errors.Wrap(err, "[service.DeleteTask] sql error")
+	}
+	return nil
 }

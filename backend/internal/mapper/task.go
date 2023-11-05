@@ -87,14 +87,21 @@ func TaskDtoToEntity(task dto.Task) entities.Task {
 	return output
 }
 
-func NewTaskToDto(task oas.NewTask) (dto.Task, error) {
+type oasTask interface {
+	GetTitle() string
+	GetText() oas.OptString
+	GetCompleted() oas.OptCompletedEnum
+	GetCounter() oas.OptCounter
+}
+
+func OasTaskToDto(task oasTask) (dto.Task, error) {
 	output := dto.Task{
-		Title: task.Title,
+		Title: task.GetTitle(),
 	}
-	if value, ok := task.Text.Get(); ok {
+	if value, ok := task.GetText().Get(); ok {
 		output.Text = &value
 	}
-	if value, ok := task.Completed.Get(); ok {
+	if value, ok := task.GetCompleted().Get(); ok {
 		completedStatus, err := completedStatusToType(string(value))
 		if err != nil {
 			return dto.Task{}, err
@@ -104,7 +111,7 @@ func NewTaskToDto(task oas.NewTask) (dto.Task, error) {
 		output.Completed = dto.CompletedNo
 	}
 
-	if value, ok := task.Counter.Get(); ok {
+	if value, ok := task.GetCounter().Get(); ok {
 		counter := dto.Counter{
 			Value:    value.Value,
 			MaxValue: value.MaxValue,

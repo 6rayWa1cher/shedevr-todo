@@ -8,7 +8,7 @@ import (
 )
 
 func (s Service) CreateTask(ctx context.Context, req *oas.NewTask) (*oas.Task, error) {
-	taskDto, err := mapper.NewTaskToDto(*req)
+	taskDto, err := mapper.OasTaskToDto(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "[app.CreateTask] bad completed enum")
 	}

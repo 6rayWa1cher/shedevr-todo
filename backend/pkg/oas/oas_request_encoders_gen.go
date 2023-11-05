@@ -16,7 +16,7 @@ func encodeCreateTaskRequest(
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
-	e := jx.GetEncoder()
+	e := new(jx.Encoder)
 	{
 		req.Encode(e)
 	}
@@ -30,7 +30,7 @@ func encodeUpdateTaskRequest(
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
-	e := jx.GetEncoder()
+	e := new(jx.Encoder)
 	{
 		req.Encode(e)
 	}
