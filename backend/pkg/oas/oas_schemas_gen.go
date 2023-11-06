@@ -394,6 +394,20 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
+type RemoteUserAuth struct {
+	APIKey string
+}
+
+// GetAPIKey returns the value of APIKey.
+func (s *RemoteUserAuth) GetAPIKey() string {
+	return s.APIKey
+}
+
+// SetAPIKey sets the value of APIKey.
+func (s *RemoteUserAuth) SetAPIKey(val string) {
+	s.APIKey = val
+}
+
 // Ref: #/components/schemas/Task
 type Task struct {
 	// The unique identifier for the task.

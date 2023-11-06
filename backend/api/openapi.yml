@@ -1,6 +1,6 @@
 openapi: 3.0.2
 servers:
-  - url: /api/v1/
+  - url: /api/v1
 info:
   title: Todo List API
   version: 1.0.0
@@ -263,3 +263,11 @@ components:
                 type: string
           example:
             error: Unauthorized request
+  securitySchemes:
+    RemoteUserAuth:
+      type: apiKey
+      in: header
+      name: X-Remote-User
+
+security:
+  - RemoteUserAuth: [ ]

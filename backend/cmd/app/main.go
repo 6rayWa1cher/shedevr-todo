@@ -108,11 +108,12 @@ func main() {
 
 		dao := repository.NewDao(db)
 
+		securityService := service.NewSecurityService()
 		taskService := service.NewTaskService(dao)
 
-		handler := app.NewService(taskService)
+		handler := app.NewService(taskService, securityService)
 
-		oasServer, err := oas.NewServer(handler, options...)
+		oasServer, err := oas.NewServer(handler, securityService, options...)
 		if err != nil {
 			return errors.Wrap(err, "server init")
 		}

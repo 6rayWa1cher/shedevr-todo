@@ -11,4 +11,5 @@ type Task struct {
 	CounterValue    sql.NullFloat64 `db:"counter_value"`
 	CounterMaxValue sql.NullFloat64 `db:"counter_max_value"`
 	CounterScale    sql.NullString  `db:"counter_scale"`
+	UserId          string          `db:"user_id"`
 }

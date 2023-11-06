@@ -9,10 +9,16 @@ import (
 )
 
 func (s Service) GetTasks(ctx context.Context) ([]oas.Task, error) {
-	tasks, err := s.taskService.GetTasks(ctx)
+	user, ok := s.securityService.GetCurrentRemoteUser(ctx)
+	if !ok {
+		return nil, errors.New("[app.GetTasks] user isn't presented")
+	}
+
+	tasks, err := s.taskService.GetTasks(ctx, user)
 	if err != nil {
 		return nil, errors.Wrap(err, "[app.GetTasks] get task unexpected error")
 	}
+
 	tasksOas := utils.Map(tasks, mapper.TaskDtoToOas)
 	return tasksOas, nil
 }

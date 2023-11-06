@@ -13,17 +13,25 @@ func (s Service) UpdateTask(
 	req *oas.UpdateTask,
 	params oas.UpdateTaskParams,
 ) (oas.UpdateTaskRes, error) {
+	user, ok := s.securityService.GetCurrentRemoteUser(ctx)
+	if !ok {
+		return nil, errors.New("[app.GetTasks] user isn't presented")
+	}
+
 	taskDto, err := mapper.OasTaskToDto(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "[app.UpdateTask] bad completed enum")
 	}
+
 	taskDto.ID = params.ID
-	task, err := s.taskService.UpdateTask(ctx, taskDto)
+
+	task, err := s.taskService.UpdateTask(ctx, taskDto, user)
 	if errors.Is(err, service.ErrNotFound) {
 		return nil, err
 	} else if err != nil {
 		return nil, errors.Wrap(err, "[app.UpdateTask] unexpected update error")
 	}
+
 	taskOas := mapper.TaskDtoToOas(*task)
 	return &taskOas, nil
 }

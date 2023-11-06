@@ -7,11 +7,13 @@ import (
 
 type Service struct {
 	oas.UnimplementedHandler
-	taskService service.TaskService
+	taskService     service.TaskService
+	securityService service.SecurityService
 }
 
-func NewService(taskService service.TaskService) *Service {
+func NewService(taskService service.TaskService, securityService service.SecurityService) *Service {
 	return &Service{
-		taskService: taskService,
+		taskService:     taskService,
+		securityService: securityService,
 	}
 }
