@@ -1,0 +1,40 @@
+- id: "ory:frontend:anonymous"
+  match:
+    url: "http://localhost/<{error,recovery*,verify*,login*,resetPassword*,profile*,**.css,**.js}>"
+    methods:
+      - GET
+      - POST
+  authenticators:
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+
+- id: "ory:frontend:protected"
+  match:
+    url: "<{https,http}>://localhost/<{dashboard,settings,robots.txt}>"
+    methods:
+      - GET
+      - POST
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+
+- id: "shedevrtodo:backend:protected"
+  match:
+    url: "<{https,http}>://localhost/api/<{tasks}>"
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header

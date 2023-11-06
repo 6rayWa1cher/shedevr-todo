@@ -1,0 +1,251 @@
+version: '3.9'
+
+services:
+  traefik:
+    image: traefik
+    depends_on:
+      - oathkeeper
+    command:
+      # - "--log.level=INFO"
+      - "--accesslog"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    profiles:
+      - infra
+      - full
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.forwardToOathkeeper.forwardauth.address=http://oathkeeper:4456/decisions"
+      - "traefik.http.middlewares.forwardToOathkeeper.forwardauth.authResponseHeaders=X-Remote-User"
+      - "traefik.http.middlewares.forwardToOathkeeper.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.forwardToOathkeeper.forwardauth.tls.insecureSkipVerify=true"
+
+  backend:
+    build:
+      context: ../backend/
+      dockerfile: deploy/app/Dockerfile
+    environment:
+      SHEDEVR_BACKEND_DB_HOST: db
+      SHEDEVR_BACKEND_DB_PORT: 5432
+      SHEDEVR_BACKEND_DB_USERNAME: shedevr
+      SHEDEVR_BACKEND_DB_NAME: shedevr
+      SHEDEVR_BACKEND_DB_PASSWORD: shedevr
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    profiles:
+      - backend
+      - full
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=(Host(`localhost`) && PathPrefix(`/api`))"
+      - "traefik.http.middlewares.backend-stripprefix.stripprefix.prefixes=/api"
+      - "traefik.http.routers.backend.middlewares=forwardToOathkeeper,backend-stripprefix@docker"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: shedevr
+      POSTGRES_USER: shedevr
+      POSTGRES_PASSWORD: shedevr
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    profiles:
+      - infra
+      - full
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U shedevr -d shedevr" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    ports:
+      - '5432:5432'
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+
+
+  db-migrate:
+    build:
+      context: ../backend
+      dockerfile: deploy/db-migrate/Dockerfile
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: shedevr
+      DB_NAME: shedevr
+      DB_PASSWORD: shedevr
+    profiles:
+      - infra
+      - full
+    volumes:
+      - ../backend/db:/app/db
+    depends_on:
+      db:
+        condition: service_healthy
+
+  mailslurper:
+    image: oryd/mailslurper:latest-smtps
+    profiles:
+      - infra
+      - full
+    ports:
+      - '4436:4436'
+      - '4437:4437'
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jaeger.rule=Host(`jaeger.localhost`)"
+      - "traefik.http.routers.jaeger.entrypoints=web"
+      - "traefik.http.services.jaeger.loadbalancer.server.port=16686"
+
+  kratos-db:
+    image: postgres:16
+    profiles:
+      - infra
+      - full
+    environment:
+      - POSTGRES_USER=kratos
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=kratos
+
+  kratos-migrate:
+    image: oryd/kratos:v1.0
+    environment:
+      - DSN=postgres://kratos:secret@kratos-db:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+    volumes:
+      - type: bind
+        source: configs/kratos
+        target: /etc/config/kratos
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    profiles:
+      - infra
+      - full
+    restart: on-failure
+
+  kratos-public:
+    depends_on:
+      - kratos-migrate
+      - kratos-db
+      - mailslurper
+    image: oryd/kratos:v1.0
+    restart: unless-stopped
+    environment:
+      - DSN=postgres://kratos:secret@kratos-db:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+      - LOG_LEVEL=trace
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    volumes:
+      - type: bind
+        source: configs/kratos
+        target: /etc/config/kratos
+    profiles:
+      - infra
+      - full
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kratos-public.rule=(Host(`localhost`) && PathPrefix(`/ory/kratos/public`))"
+      - "traefik.http.middlewares.kratos-public-stripprefix.stripprefix.prefixes=/ory/kratos/public"
+      - "traefik.http.routers.kratos-public.middlewares=kratos-public-stripprefix@docker"
+      - "traefik.http.routers.kratos-public.entrypoints=web"
+      - "traefik.http.services.kratos-public.loadbalancer.server.port=4433"
+
+  kratos-admin:
+    depends_on:
+      - kratos-migrate
+      - kratos-db
+      - mailslurper
+    image: oryd/kratos:v1.0
+    restart: unless-stopped
+    environment:
+      - DSN=postgres://kratos:secret@kratos-db:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+      - LOG_LEVEL=trace
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    volumes:
+      - type: bind
+        source: configs/kratos
+        target: /etc/config/kratos
+    profiles:
+      - infra
+      - full
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kratos-admin.rule=(Host(`localhost`) && PathPrefix(`/ory/kratos`))"
+      - "traefik.http.middlewares.kratos-admin-stripprefix.stripprefix.prefixes=/ory/kratos"
+      - "traefik.http.routers.kratos-admin.middlewares=kratos-admin-stripprefix@docker"
+      - "traefik.http.routers.kratos-admin.entrypoints=web"
+      - "traefik.http.services.kratos-admin.loadbalancer.server.port=4434"
+
+  oathkeeper:
+    depends_on:
+      - kratos-public
+      - kratos-admin
+      - jaeger
+    image: oryd/oathkeeper:v0.40
+    command: serve --config=/etc/config/oathkeeper/oathkeeper.yml
+    environment:
+      #      - TRACING_PROVIDER=jaeger
+      #      - TRACING_PROVIDER_JAEGER_SAMPLING_SERVER_URL=http://jaeger.localhost/sampling
+      #      - TRACING_PROVIDER_JAEGER_LOCAL_AGENT_ADDRESS=jaeger:6831
+      #      - TRACING_PROVIDER_JAEGER_SAMPLING_TYPE=const
+      #      - TRACING_PROVIDER_JAEGER_SAMPLING_VALUE=1
+      - LOG_LEVEL=trace
+    volumes:
+      - type: bind
+        source: configs/oathkeeper
+        target: /etc/config/oathkeeper
+    restart: on-failure
+    profiles:
+      - infra
+      - full
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.oathkeeper.rule=(Host(`localhost`) && PathPrefix(`/ory/oathkeeper`))"
+      - "traefik.http.middlewares.oathkeeper-stripprefix.stripprefix.prefixes=/ory/oathkeeper"
+      - "traefik.http.routers.oathkeeper.middlewares=oathkeeper-stripprefix@docker"
+      - "traefik.http.routers.oathkeeper.entrypoints=web"
+      - "traefik.http.routers.oathkeeper.service=oathkeeper"
+      - "traefik.http.services.oathkeeper.loadbalancer.server.port=4456"
+
+  kratos-selfservice-ui-node:
+    image: oryd/kratos-selfservice-ui-node:v0.8.0-alpha.3
+    environment:
+      - KRATOS_PUBLIC_URL=http://kratos-public:4433/
+      - KRATOS_BROWSER_URL=http://localhost/ory/kratos/public/
+    restart: on-failure
+    profiles:
+      - self-service
+      - full
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kratos-selfservice-ui-node.rule=(Host(`localhost`))"
+      - "traefik.http.routers.kratos-selfservice-ui-node.entrypoints=web"
+      - "traefik.http.services.kratos-selfservice-ui-node.loadbalancer.server.port=3000"
+
+volumes:
+  pgdata:
